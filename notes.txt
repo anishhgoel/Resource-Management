@@ -1,0 +1,19 @@
+to initiate backend:  npm init -y
+
+runtime dependencied : npm install express cors dotenv mongoose morgan bcryptjs jsonwebtoken mongodb
+
+development dependencies : npm install --save-dev nodemon
+
+##############################################################
+Mongodb:
+
+Username : anishgoel
+passeord : v50xvlnKh4a6UxZB
+
+
+
+##################################################################################################################################################################################################################################################################################################
+
+
+Mongodb on AWS cloud
+
