@@ -1,9 +1,12 @@
-require('dotenv').config();
+import dotenv from 'dotenv';
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import morgan from 'morgan';
+import authRoutes from './routes/auth.js';
+import projectRoutes from './routes/projects.js';
 
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const morgan = require('morgan');
+dotenv.config();
 
 const app = express();
 
@@ -20,11 +23,14 @@ try {
   console.error('MongoDB connection error:', err);
 }
 
+app.get('/', (req, res)=>{
+    res.send("hello world")
+})
 
 app.use('/api/auth', require('./routes/auth'))
 app.use('api/projects', require('./routes/projects'))
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, ()=> {
     console.log("Server running on port ${PORT}")
