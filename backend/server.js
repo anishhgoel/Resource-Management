@@ -23,6 +23,7 @@ try {
   console.error('MongoDB connection error:', err);
 }
 
+// Testing route
 app.get('/', (req, res)=>{
     res.send("hello world")
 })
