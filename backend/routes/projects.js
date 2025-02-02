@@ -1,71 +1,92 @@
 import express from 'express';
 import auth from '../middleware/auth.js';
+import authorize from '../middleware/authorize.js';
 import Project from '../models/Project.js';
 
 const router = express.Router();
 
-// to get the projects
+// GET all projects (filtered based on user role)
+/*
+ admin  : can get all projects 
+        : can see all clients and all team members.
+
+ client : can only get projects where they are listed as the client
+        : can see client details (name, email) and team members assigned to the project
+
+
+ team   : can only get projects where they are part of the team
+        : can see client details (name, email) and team members assigned to the project
+*/
 router.get('/', auth, async (req, res) => {
-    try {
-        let projects;
-        
-        // if client, can only view their own projects
-        if (req.user.role === 'client') {
-          projects = await Project.find({ client: req.user.id })
-            .populate('client', 'name email')
-            .populate('team.user', 'name email');
-        } 
-
-        //if team member can view projects they are part of (listed in project's team array)
-        else if (req.user.role === 'team') {
-          projects = await Project.find({ 
-            'team.user': req.user.id 
-          })
-            .populate('client', 'name email')
-            .populate('team.user', 'name email');
-        }
-
-        // if client can see all projects
-        else if (req.user.role === 'admin') {
-          projects = await Project.find()
-            .populate('client', 'name email')
-            .populate('team.user', 'name email');
-        }
-
-        res.json(projects);
-      } catch (err) {
-        console.error('Error fetching projects:', err);
-        res.status(500).json({ msg: 'Server error' });
-      }
+  try {
+    let projects;
+    if (req.user.role === 'client') {
+      projects = await Project.find({ client: req.user.id })
+        .populate('client', 'name email')
+        .populate('team.user', 'name email');
+    } else if (req.user.role === 'team') {
+      projects = await Project.find({ 'team.user': req.user.id })
+        .populate('client', 'name email')
+        .populate('team.user', 'name email');
+    } else if (req.user.role === 'admin') {
+      projects = await Project.find()
+        .populate('client', 'name email')
+        .populate('team.user', 'name email');
+    }
+    res.json(projects);
+  } catch (err) {
+    console.error('Error fetching projects:', err);
+    res.status(500).json({ msg: 'Server error' });
+  }
 });
 
-// create a new project
-router.post('/', auth, async (req, res) => {
+// GET a single project by project ID
+router.get('/:projectId', auth, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId)
+      .populate('client', 'name email')
+      .populate('team.user', 'name email');
+    if (!project) {
+      return res.status(404).json({ msg: 'Project not found' });
+    }
+    // clients can only access their own projects
+    if (req.user.role === 'client' && project.client.toString() !== req.user.id) {
+      return res.status(403).json({ msg: 'Access denied' });
+    }
+    // team members only access if assigned to their project
+    if (req.user.role === 'team' && !project.team.some(member => member.user.toString() === req.user.id)) {
+      return res.status(403).json({ msg: 'Access denied' });
+    }
+    // if not client or team then would be admin, so can always see project
+    res.json(project);
+  } catch (err) {
+    console.error('Error fetching project:', err);
+    res.status(500).json({ msg: 'Server error' });
+  }
+});
+
+// POST create a new project (only admin and team can create)
+router.post('/', auth, authorize(['admin', 'team']), async (req, res) => {
     try {
       const { title, description, deadline, clientId, team } = req.body;
       if (!title) {
         return res.status(400).json({ msg: 'Title is required' });
       }
+      // if no clientId is provided, default to the logged-in user's ID.
+      const client = clientId || req.user.id;
   
-      // Create project object
       const projectData = {
         title,
         description,
         deadline,
-        // if user is a client, they are automatically the client
-        // if admin/team, they can specify a client
-        client: req.user.role === 'client' ? req.user.id : clientId,
+        client,  // use the provided clientId or default to req.user.id.
         team: team || []
       };
-  
       const project = new Project(projectData);
       await project.save();
-      
-      // Populate client details in response
       const populatedProject = await Project.findById(project._id)
         .populate('client', 'name email')
         .populate('team.user', 'name email');
-        
       res.json(populatedProject);
     } catch (err) {
       console.error('Error creating project:', err);
@@ -73,42 +94,101 @@ router.post('/', auth, async (req, res) => {
     }
   });
 
+// PUT full update a project by ID (admin only)
+router.put('/:projectId', auth, authorize(['admin']), async (req, res) => {
+  try {
+    const { title, description, deadline, status, clientId, team } = req.body;
+    const updateData = {};
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (deadline !== undefined) updateData.deadline = deadline;
+    if (status !== undefined) updateData.status = status;
+    if (clientId !== undefined) updateData.client = clientId;
+    if (team !== undefined) updateData.team = team;
 
-// to add team member to a project
+    const updatedProject = await Project.findByIdAndUpdate(
+      req.params.projectId,
+      { $set: updateData },
+      { new: true }
+    )
+      .populate('client', 'name email')
+      .populate('team.user', 'name email');
 
-// Add team members to a project
-router.post('/:projectId/team', auth, async (req, res) => {
-    try {
-      const { userId, role, hoursAllocated } = req.body;
-      const project = await Project.findById(req.params.projectId);
-      
-      if (!project) {
-        return res.status(404).json({ msg: 'Project not found' });
-      }
-  
-      // check if user is already in team
-      if (project.team.some(member => member.user.toString() === userId)) {
-        return res.status(400).json({ msg: 'User already in team' });
-      }
-  
-      project.team.push({
-        user: userId,
-        role,
-        hoursAllocated
-      });
-  
-      await project.save();
-      
-      const updatedProject = await Project.findById(req.params.projectId)
-        .populate('client', 'name email')
-        .populate('team.user', 'name email');
-  
-      res.json(updatedProject);
-    } catch (err) {
-      console.error('Error adding team member:', err);
-      res.status(500).json({ msg: 'Server error' });
+    if (!updatedProject) {
+      return res.status(404).json({ msg: 'Project not found' });
     }
-  });
-  
+    res.json(updatedProject);
+  } catch (err) {
+    console.error('Error updating project:', err);
+    res.status(500).json({ msg: 'Server error' });
+  }
+});
 
-export default router;  
+// PATCH update project status and/or log hours (team members only)
+router.patch('/:projectId/status', auth, authorize(['team']), async (req, res) => {
+  try {
+    const { status, logHours } = req.body;
+    const project = await Project.findById(req.params.projectId);
+    if (!project) {
+      return res.status(404).json({ msg: 'Project not found' });
+    }
+    // to verify the team member is part of the project
+    const teamMember = project.team.find(member => member.user.toString() === req.user.id);
+    if (!teamMember) {
+      return res.status(403).json({ msg: 'Access denied: You are not a member of this project' });
+    }
+    if (status !== undefined) {
+      project.status = status;
+    }
+    if (logHours !== undefined) {
+      teamMember.hoursAllocated = logHours;
+    }
+    await project.save();
+    const updatedProject = await Project.findById(req.params.projectId)
+      .populate('client', 'name email')
+      .populate('team.user', 'name email');
+    res.json(updatedProject);
+  } catch (err) {
+    console.error('Error updating project status:', err);
+    res.status(500).json({ msg: 'Server error' });
+  }
+});
+
+// DELETE a project (admin only)
+router.delete('/:projectId', auth, authorize(['admin']), async (req, res) => {
+  try {
+    const deletedProject = await Project.findByIdAndDelete(req.params.projectId);
+    if (!deletedProject) {
+      return res.status(404).json({ msg: 'Project not found' });
+    }
+    res.json({ msg: 'Project deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting project:', err);
+    res.status(500).json({ msg: 'Server error' });
+  }
+});
+
+// POST add a team member to a project (admin and team)
+router.post('/:projectId/team', auth, authorize(['admin', 'team']), async (req, res) => {
+  try {
+    const { userId, role, hoursAllocated } = req.body;
+    const project = await Project.findById(req.params.projectId);
+    if (!project) {
+      return res.status(404).json({ msg: 'Project not found' });
+    }
+    if (project.team.some(member => member.user.toString() === userId)) {
+      return res.status(400).json({ msg: 'User already in team' });
+    }
+    project.team.push({ user: userId, role, hoursAllocated });
+    await project.save();
+    const updatedProject = await Project.findById(req.params.projectId)
+      .populate('client', 'name email')
+      .populate('team.user', 'name email');
+    res.json(updatedProject);
+  } catch (err) {
+    console.error('Error adding team member:', err);
+    res.status(500).json({ msg: 'Server error' });
+  }
+});
+
+export default router;
