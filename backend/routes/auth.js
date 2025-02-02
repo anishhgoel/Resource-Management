@@ -32,13 +32,60 @@ router.post('/register', async (req, res)=>{
             password : hash,
             role : role || 'client'
         });
+        //saving user
         await user.save()
         res.json({msg : "User registered successfully"})
     }
     catch (err){
-        console.error("Error in registering", err)
+        console.error("Error in registering : ", err)
         res.status(500).json({msg : "Server error"})
-
     }
 });
 
+
+
+// to login user
+
+router.post("/login", async (req, res) =>{
+    try{
+        const {email, password} = req.body;
+        // basic check for inputs
+        if (!email || !password){
+            return res.status(400).json({msg : "Please enter all required fields"})
+        }
+        // finding user by email
+        const user = await User.findOne({email})
+        if (!user) res.status(400).json({msg : "Email does not exist"});
+
+        // comparing password
+        const isMatch = await bcrypt.compare(password, user.password)
+        if (!isMatch) res.status(400).json({msg : "Invalid credentials"});
+
+        //creating jwt payload
+        const payload = {
+            user: {
+              id: user._id,
+              role: user.role
+            }
+          };
+        
+        // Sign and send the token
+        jwt.sign(
+            payload,
+            jwtSecret,
+            {
+                expiresIn: '24h'
+            },
+            (err, token)=>{
+                if (err) throw err;
+                res.json({token});
+            }
+        );
+    }
+    catch(err){
+        console.err("Error in /login : ", err)
+        res.status(500).json({ msg: 'Server error' });
+    }
+});
+
+export default router;
