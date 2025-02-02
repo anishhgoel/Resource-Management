@@ -1,10 +1,12 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
 const router = express.Router()
-const jwtSecret = process.env.JWT_SECRET;
+const jwtSecret = process.env.JWT_SECRET|| 'secretkey';
 
 // to register user
 
@@ -55,11 +57,11 @@ router.post("/login", async (req, res) =>{
         }
         // finding user by email
         const user = await User.findOne({email})
-        if (!user) res.status(400).json({msg : "Email does not exist"});
+        if (!user) return res.status(400).json({msg : "Email does not exist"});
 
         // comparing password
         const isMatch = await bcrypt.compare(password, user.password)
-        if (!isMatch) res.status(400).json({msg : "Invalid credentials"});
+        if (!isMatch) return res.status(400).json({msg : "Invalid credentials"});
 
         //creating jwt payload
         const payload = {
@@ -68,8 +70,8 @@ router.post("/login", async (req, res) =>{
               role: user.role
             }
           };
-        
-        // Sign and send the token
+         
+        // signing in and send the token
         jwt.sign(
             payload,
             jwtSecret,
@@ -83,8 +85,8 @@ router.post("/login", async (req, res) =>{
         );
     }
     catch(err){
-        console.err("Error in /login : ", err)
-        res.status(500).json({ msg: 'Server error' });
+        console.error("Error in /login : ", err)
+        res.status(500).json({ msg: 'Server error', err : err.msg});
     }
 });
 
