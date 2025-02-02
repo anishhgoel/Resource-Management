@@ -4,16 +4,19 @@ import Project from '../models/Project.js';
 
 const router = express.Router();
 
-// to get all the projects
+// to get the projects
 router.get('/', auth, async (req, res) => {
     try {
         let projects;
         
+        // if client, can only view their own projects
         if (req.user.role === 'client') {
           projects = await Project.find({ client: req.user.id })
             .populate('client', 'name email')
             .populate('team.user', 'name email');
         } 
+
+        //if team member can view projects they are part of (listed in project's team array)
         else if (req.user.role === 'team') {
           projects = await Project.find({ 
             'team.user': req.user.id 
@@ -21,6 +24,8 @@ router.get('/', auth, async (req, res) => {
             .populate('client', 'name email')
             .populate('team.user', 'name email');
         }
+
+        // if client can see all projects
         else if (req.user.role === 'admin') {
           projects = await Project.find()
             .populate('client', 'name email')

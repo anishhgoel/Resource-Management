@@ -5,6 +5,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import authRoutes from './routes/auth.js';
 import projectRoutes from './routes/projects.js';
+//import userRoutes from './routes/users.js';
 
 dotenv.config();
 
@@ -31,6 +32,8 @@ app.get('/', (req, res)=>{
 
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
+//app.use('/api/users', userRoutes);
+
 
 const PORT = process.env.PORT || 5001;
 
