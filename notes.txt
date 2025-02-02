@@ -4,11 +4,17 @@ runtime dependencied : npm install express cors dotenv mongoose morgan bcryptjs 
 
 development dependencies : npm install --save-dev nodemon
 
-##############################################################
+
+front end: npm install axios react-router-dom
+
+############################################################################################################################
+
 Mongodb:
 
 Username : anishgoel
 passeord : v50xvlnKh4a6UxZB
+################
+
 
 
 
