@@ -1,7 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import useSocket from '../hooks/useSocket';
 
 function Dashboard({ token, userRole }) {
+  const socket = useSocket('http://localhost:5000'); // Adjust if needed
+
+  useEffect(() => {
+    if (socket) {
+      socket.on('projectUpdated', (updatedProject) => {
+        console.log('Project updated in real time:', updatedProject);
+      });
+    }
+  }, [socket]);
+
   return (
     <div className="bg-white p-6 rounded shadow">
       <h2 className="text-2xl font-bold mb-2">Dashboard</h2>

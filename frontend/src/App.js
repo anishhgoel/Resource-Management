@@ -7,6 +7,7 @@ import ProjectList from './components/ProjectList';
 import ProjectDetail from './components/ProjectDetail';
 import AddProject from './components/AddProject';
 import EditProject from './components/EditProject';
+import Notifications from './components/Notifications';
 import Profile from './components/Profile';
 import AdminUsers from './components/AdminUsers';
 import api from './services/api';
@@ -39,24 +40,25 @@ function App() {
         <nav className="bg-gray-800 text-white p-4 rounded flex justify-between items-center">
           <h2 className="text-xl font-bold">Resource Management System</h2>
           <ul className="flex space-x-4">
-            {token ? (
-              <>
-                <li><Link className="hover:text-gray-300" to="/dashboard">Dashboard</Link></li>
-                <li><Link className="hover:text-gray-300" to="/projects">Projects</Link></li>
-                <li><Link className="hover:text-gray-300" to="/projects/new">Add Project</Link></li>
-                <li><Link className="hover:text-gray-300" to="/profile">Profile</Link></li>
-                {userRole === 'admin' && (
-                  <li><Link className="hover:text-gray-300" to="/admin/users">Admin Users</Link></li>
-                )}
-                <li><button className="hover:text-gray-300" onClick={handleLogout}>Logout</button></li>
-              </>
-            ) : (
-              <>
-                <li><Link className="hover:text-gray-300" to="/login">Login</Link></li>
-                <li><Link className="hover:text-gray-300" to="/register">Register</Link></li>
-              </>
-            )}
-          </ul>
+  {token ? (
+    <>
+      <li><Link className="hover:text-gray-300" to="/dashboard">Dashboard</Link></li>
+      <li><Link className="hover:text-gray-300" to="/projects">Projects</Link></li>
+      <li><Link className="hover:text-gray-300" to="/projects/new">Add Project</Link></li>
+      <li><Link className="hover:text-gray-300" to="/notifications">Notifications</Link></li>
+      <li><Link className="hover:text-gray-300" to="/profile">Profile</Link></li>
+      {userRole === 'admin' && (
+        <li><Link className="hover:text-gray-300" to="/admin/users">Admin Users</Link></li>
+      )}
+      <li><button className="hover:text-gray-300" onClick={handleLogout}>Logout</button></li>
+    </>
+  ) : (
+    <>
+      <li><Link className="hover:text-gray-300" to="/login">Login</Link></li>
+      <li><Link className="hover:text-gray-300" to="/register">Register</Link></li>
+    </>
+  )}
+</ul>
         </nav>
         <div className="mt-6">
           <Routes>
@@ -70,6 +72,7 @@ function App() {
             <Route path="/projects/edit/:projectId" element={token && userRole === 'admin' ? <EditProject token={token} /> : <Navigate to="/dashboard" />} />
             <Route path="/profile" element={token ? <Profile token={token} /> : <Navigate to="/login" />} />
             <Route path="/admin/users" element={token && userRole === 'admin' ? <AdminUsers token={token} /> : <Navigate to="/dashboard" />} />
+            <Route path="/notifications" element={token ? <Notifications /> : <Navigate to="/login" />} />
           </Routes>
         </div>
       </div>
