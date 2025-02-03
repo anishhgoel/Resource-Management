@@ -7,6 +7,12 @@ development dependencies : npm install --save-dev nodemon
 
 front end: npm install axios react-router-dom
 
+npm install @heroicons/react react-router-dom @headlessui/react tailwindcss
+
+npm install lucide-react
+
+
+
 ############################################################################################################################
 
 Mongodb:
