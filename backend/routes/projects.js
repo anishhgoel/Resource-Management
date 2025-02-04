@@ -117,6 +117,8 @@ router.put('/:projectId', auth, authorize(['admin']), async (req, res) => {
     if (!updatedProject) {
       return res.status(404).json({ msg: 'Project not found' });
     }
+    const io = req.app.locals.io;
+    io.emit('projectUpdated', updatedProject);
     res.json(updatedProject);
   } catch (err) {
     console.error('Error updating project:', err);
