@@ -4,35 +4,30 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import morgan from 'morgan';
-import http from 'http';
+import http from 'http'; // built-in Node HTTP server
 import authRoutes from './routes/auth.js';
+import { fileURLToPath } from 'url';
+import path from 'path';
 import projectRoutes from './routes/projects.js';
 import userRoutes from './routes/users.js';
 import { Server } from 'socket.io';
 
+
 const app = express();
-const server = http.createServer(app);
 
-// CORS Configuration
-const frontendUrl = process.env.FRONTEND_URL || 'https://resource-management-f979.onrender.com';
-const corsOptions = {
-  origin: frontendUrl,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
-};
-
-app.use(express.json());
-app.use(cors(corsOptions));
-app.use(morgan('dev'));
+app.use(express.json()); 
+app.use(cors());         
+app.use(morgan('dev')); //for logging http requests
 
 const mongoURI = process.env.MONGODB_URI;
 
-// Socket.IO with matching CORS configuration
+
+const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: frontendUrl,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true
+    origin: "*", 
+    methods: ["GET", "POST", "PUT", "DELETE"],
   },
 });
 
@@ -53,13 +48,15 @@ try {
 }
 
 // Testing route
-app.get('/', (req, res) => {
-  res.send("hello world");
-});
+app.get('/', (req, res)=>{
+    res.send("hello world")
+})
+
 
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/users', userRoutes);
+
 
 if (process.env.NODE_ENV === 'production') {
   const __filename = fileURLToPath(import.meta.url);
@@ -74,7 +71,6 @@ if (process.env.NODE_ENV === 'production') {
 
 const PORT = process.env.PORT || 5001;
 
-// Use server.listen instead of app.listen for Socket.IO
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(PORT, ()=> {
+    console.log(`Server running on port ${PORT}`)
 });
