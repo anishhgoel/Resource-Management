@@ -22,10 +22,17 @@ passeord : v50xvlnKh4a6UxZB
 ################
 
 
+frontend: https://resource-management-f979.onrender.com
 
+backend : https://projectmanagementbackend-8utq.onrender.com
 
 ##################################################################################################################################################################################################################################################################################################
 
 
 Mongodb on AWS cloud
 
+
+3.1 Process Manager (PM2)
+
+PM2 is a popular Node.js process manager that supports clustering.
+	1.	Install PM2 globally:
