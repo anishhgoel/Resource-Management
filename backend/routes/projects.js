@@ -197,15 +197,25 @@ router.post('/:projectId/team', auth, authorize(['admin', 'team']), async (req, 
     await project.save();
     // Populate the team field to return user details (name, email, etc.)
     const updatedProject = await Project.findById(req.params.projectId)
-      .populate('client', 'name email')
-      .populate('team.user', 'name email');
-    // (Optional) Emit a Socket.IO event for notifications here
-    res.json(updatedProject);
-  } catch (err) {
-    console.error('Error adding team member:', err);
-    res.status(500).json({ msg: 'Server error' });
-  }
-});
+  .populate('client', 'name email')
+  .populate('team.user', 'name email');
+
+// Emit a Socket.IO event
+const io = req.app.locals.io;
+if (io) {
+  const eventData = {
+    message: `${user.name} was added to project "${project.title}".`,
+    project: updatedProject,
+  };
+  console.log("Emitting teamMemberAdded event:", eventData); // Debug log
+  io.emit('teamMemberAdded', eventData);
+}
+res.json(updatedProject);
+    } catch (err) {
+      console.error('Error adding team member:', err);
+      res.status(500).json({ msg: 'Server error' });
+    }
+  });
 
 // DELETE a team member to a project (admin and team)
 

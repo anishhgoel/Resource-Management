@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import useSocket from '../hooks/useSocket';
 
 function Dashboard({ token, userRole }) {
-  const socket = useSocket('http://localhost:5000'); // Adjust if needed
+  const socket = useSocket(process.env.REACT_APP_SOCKET_URL);
 
   useEffect(() => {
     if (socket) {
