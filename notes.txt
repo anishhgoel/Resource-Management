@@ -15,11 +15,7 @@ npm install lucide-react
 
 ############################################################################################################################
 
-Mongodb:
 
-Username : anishgoel
-passeord : v50xvlnKh4a6UxZB
-################
 
 
 frontend: https://resource-management-f979.onrender.com

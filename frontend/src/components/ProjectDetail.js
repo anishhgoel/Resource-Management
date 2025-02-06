@@ -6,7 +6,7 @@ function ProjectDetail({ token }) {
   const { projectId } = useParams();
   const [project, setProject] = useState(null);
   const [error, setError] = useState('');
-  const [newTeamID, setNewTeamID] = useState('');
+  const [newTeamEmail, setNewTeamEmail] = useState(''); // Changed variable name
   const [newTeamRole, setNewTeamRole] = useState('');
   const [newTeamHours, setNewTeamHours] = useState('');
 
@@ -21,18 +21,19 @@ function ProjectDetail({ token }) {
     };
 
     fetchProject();
-  }, [projectId]); // Removed token since it's not used in fetchProject
+  }, [projectId]);
 
   const handleAddTeamMember = async (e) => {
     e.preventDefault();
     try {
+      // Send userEmail instead of userID
       const res = await api.post(`/projects/${projectId}/team`, {
-        userID: newTeamID,
+        userEmail: newTeamEmail,
         role: newTeamRole,
         hoursAllocated: parseInt(newTeamHours) || 0,
       });
       setProject(res.data);
-      setNewTeamID('');
+      setNewTeamEmail('');
       setNewTeamRole('');
       setNewTeamHours('');
       setError(''); // Clear any previous errors
@@ -112,16 +113,16 @@ function ProjectDetail({ token }) {
             <h4 className="text-lg font-semibold mb-2">Add Team Member</h4>
             <form onSubmit={handleAddTeamMember} className="space-y-4">
               <div>
-                <label className="block mb-1">User ID:</label>
+                <label className="block mb-1">User Email:</label>
                 <input
-                  type="text"
+                  type="email"
                   className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none"
-                  value={newTeamID}
-                  onChange={(e) => setNewTeamID(e.target.value)}
+                  value={newTeamEmail}
+                  onChange={(e) => setNewTeamEmail(e.target.value)}
                   required
                 />
                 <small className="text-gray-500 mt-1">
-                  Enter the user's ID (this can be improved later to use a dropdown or email lookup)
+                  Enter the user's email address
                 </small>
               </div>
               <div>

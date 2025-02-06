@@ -2,6 +2,7 @@ import express from 'express';
 import auth from '../middleware/auth.js';
 import authorize from '../middleware/authorize.js';
 import Project from '../models/Project.js';
+import User from '../models/User.js';
 
 const router = express.Router();
 
@@ -172,38 +173,39 @@ router.delete('/:projectId', auth, authorize(['admin']), async (req, res) => {
 
 // POST add a team member to a project (admin and team)
 router.post('/:projectId/team', auth, authorize(['admin', 'team']), async (req, res) => {
-    try {
-      const { userID, role, hoursAllocated } = req.body;
-      if (!userID) {
-        return res.status(400).json({ msg: 'User ID is required' });
-      }
-      // check if the user exists in the database
-      const user = await User.findById(userID);
-      if (!user) {
-        return res.status(404).json({ msg: 'User not found in system' });
-      }
-      // to find the project by its ID and make sure it exist
-      const project = await Project.findById(req.params.projectId);
-      if (!project) {
-        return res.status(404).json({ msg: 'Project not found' });
-      }
-      // to check if the user is already in the team
-      if (project.team.some(member => member.user && member.user.toString() === user._id.toString())) {
-        return res.status(400).json({ msg: 'User already in team' });
-      }
-      // Add the new team member by storing the user’s ObjectId
-      project.team.push({ user: user._id, role, hoursAllocated });
-      await project.save();
-      // Populate the team field to return user details (name, email, etc.)
-      const updatedProject = await Project.findById(req.params.projectId)
-        .populate('client', 'name email')
-        .populate('team.user', 'name email');
-      res.json(updatedProject);
-    } catch (err) {
-      console.error('Error adding team member:', err);
-      res.status(500).json({ msg: 'Server error' });
+  try {
+    const { userEmail, role, hoursAllocated } = req.body;
+    if (!userEmail) {
+      return res.status(400).json({ msg: 'User email is required' });
     }
-  });
+    // Look up the user by email
+    const user = await User.findOne({ email: userEmail });
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found in system' });
+    }
+    // Find the project by its ID
+    const project = await Project.findById(req.params.projectId);
+    if (!project) {
+      return res.status(404).json({ msg: 'Project not found' });
+    }
+    // Check if the user is already in the team
+    if (project.team.some(member => member.user && member.user.toString() === user._id.toString())) {
+      return res.status(400).json({ msg: 'User already in team' });
+    }
+    // Add the new team member by storing the user's ObjectId
+    project.team.push({ user: user._id, role, hoursAllocated });
+    await project.save();
+    // Populate the team field to return user details (name, email, etc.)
+    const updatedProject = await Project.findById(req.params.projectId)
+      .populate('client', 'name email')
+      .populate('team.user', 'name email');
+    // (Optional) Emit a Socket.IO event for notifications here
+    res.json(updatedProject);
+  } catch (err) {
+    console.error('Error adding team member:', err);
+    res.status(500).json({ msg: 'Server error' });
+  }
+});
 
 // DELETE a team member to a project (admin and team)
 
