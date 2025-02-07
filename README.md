@@ -1,5 +1,9 @@
 The **Resource Management System** is a full‑stack web application that provides an integrated solution for project tracking, resource allocation, and client communications. It includes features such as user authentication, project creation and updates, team management, real‑time notifications, and profile management.
 
+## Try it:
+
+https://resource-management-9eqa.vercel.app
+
 ## Features
 
 - **Project Management:**
