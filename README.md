@@ -33,3 +33,16 @@ The **Resource Management System** is a full‑stack web application that provid
   - MongoDB & Mongoose
   - Socket.IO
   - JWT Authentication
+
+
+## Deployment
+
+This project is deployed as two separate services:
+###	•	Backend (Render):
+
+The Express API (with Socket.IO) is deployed on Render.
+URL: https://projectmanagementbackend-8utq.onrender.com
+
+###	•	Frontend (Vercel):
+The React app is deployed on Vercel.
+URL: https://resource-management-9eqa.vercel.app
